@@ -42,10 +42,15 @@ python jfda/train.py --net o --gpu $GPU --size 64 --lr 0.05 --lrw 0.1 --lrp 7 --
 
 ## Test
 
-
+```
+python simpledemo.py
+```
 
 ## Note
-Landmark alignment in original mtcnn is removed in this repo. Here only do object classification and bounding box regression. Each convolutional layer kernel number in onet has reduced for faster network inference.
+
+1. Landmark alignment in original mtcnn is removed in this repo. Here only do object classification and bounding box regression. 
+
+2. Each convolutional layer kernel number in onet has reduced for faster network inference.
 
 ## References
 
