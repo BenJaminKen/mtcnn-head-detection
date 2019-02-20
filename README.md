@@ -1,14 +1,12 @@
-Joint-Face-Detection-and-Alignment
+MTCNN head detection
 ==================================
-
-Caffe and Python implementation of Joint Face Detection and Alignment using Multi-task Cascaded Convolutional Networks.
 
 ## Set up
 
 Set up environment and copy C++ layer code to Caffe's source code tree.
 
 ```
-$ export PYTHONPATH=/path/to/Joint-Face-Detection-and-Alignment:$PYTHONPATH
+$ export PYTHONPATH=/path/to/mtcnn-head-detection:$PYTHONPATH
 $ export CAFFE_HOME=/path/to/caffe
 $ sh layers/copy.sh
 ```
@@ -17,63 +15,37 @@ Compile Caffe following its document.
 
 ## Prepare data
 
-Download dataset [WIDER](http://mmlab.ie.cuhk.edu.hk/projects/WIDERFace/), [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) and [FDDB](http://vis-www.cs.umass.edu/fddb/). Put them in data directory like below.
-
-```
-data
-├── CelebA
-│   └── img_celeba
-├── fddb
-│   ├── FDDB-folds
-│   ├── images
-│   │   ├── 2002
-│   │   └── 2003
-│   └── result
-│       └── images
-└── WIDER
-    ├── wider_face_split
-    ├── WIDER_test
-    ├── WIDER_train
-    └── WIDER_val
-```
-
-I have write a matlab script to extract WIDER FACE info from matlab `mat` file to `txt` file.
+Download dataset [SCUT-HEAD](https://github.com/HCIILAB/SCUT-HEAD-Dataset-Release).
+Unzip and put them in data directory.
 
 ## Train
 
-Prepare data and train network follow the commands in `train.sh`.
+**pnet**
+```
+python jfda/prepare.py --net p --wider --worker 8
+python jfda/train.py --net p --gpu 0 --size 128 --lr 0.05 --lrw 0.1 --lrp 5 --wd 0.0001 --epoch 25
+```
+**rnet**
+
+Choose appropriate pnet caffemodel to generate prior for rnet, and edit ```cfg.PROPOSAL_NETS``` in ```config.py```
+```
+python jfda/prepare.py --net r --gpu 0 --detect --wider --worker 4
+python jfda/train.py --net r --gpu 0 --size 128 --lr 0.05 --lrw 0.1 --lrp 5 --wd 0.0001 --epoch 25
+```
+**onet**
+
+Choose appropriate rnet caffemodel to generate prior for onet, and edit ```cfg.PROPOSAL_NETS``` in ```config.py```
+```
+python jfda/prepare.py --net o --gpu 0 --detect --wider --worker 4
+python jfda/train.py --net o --gpu $GPU --size 64 --lr 0.05 --lrw 0.1 --lrp 7 --wd 0.0001 --epoch 35
+```
 
 ## Test
 
-Test the model with `demo.py` for simple detection and `fddb.py` for FDDB benchmark.
 
-## Memory Issue
 
-Since `pNet` may output many bboxes for `rNet` and Caffe's `Blob` never realloc the memory if your new data is smaller, this makes `Blob` only grow the memory and never reduce, which looks like a memory leak. It is fine for most cases but not for our case. You may modify `src/caffe/blob.cpp` if you encounter the memory issue.
-
-```c++
-template <typename Dtype>
-void Blob<Dtype>::Reshape(const vector<int>& shape) {
-  /* some code */
-  if (count_ > capacity_) {  // never reduce the memory here
-    capacity_ = count_;
-    data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-    diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-  }
-}
-```
-
-```c++
-template <typename Dtype>
-void Blob<Dtype>::Reshape(const vector<int>& shape) {
-  /* some code */
-  if (count_ != capacity_) {  // make a new data buffer
-    capacity_ = count_;
-    data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-    diff_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-  }
-}
-```
+## Note
+Landmark alignment in original mtcnn is removed in this repo. Here only do object classification and bounding box regression. Each convolutional layer kernel number in onet has reduced for faster network inference.
 
 ## References
 
