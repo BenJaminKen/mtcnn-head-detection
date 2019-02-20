@@ -19,7 +19,7 @@ layer {
   bottom: "data"
   top: "conv1"
   convolution_param {
-    num_output: 32
+    num_output: 16
     kernel_size: 3
     stride: 1
   }
@@ -48,7 +48,7 @@ layer {
   bottom: "pool1"
   top: "conv2"
   convolution_param {
-    num_output: 64
+    num_output: 32
     kernel_size: 3
     stride: 1
   }
@@ -77,7 +77,7 @@ layer {
   bottom: "pool2"
   top: "conv3"
   convolution_param {
-    num_output: 64
+    num_output: 48
     kernel_size: 3
     stride: 1
   }
@@ -106,7 +106,7 @@ layer {
   bottom: "pool3"
   top: "conv4"
   convolution_param {
-    num_output: 128
+    num_output: 64
     kernel_size: 2
     stride: 1
   }
@@ -124,7 +124,7 @@ layer {
   bottom: "conv4"
   top: "fc"
   inner_product_param {
-    num_output: 256
+    num_output: 96
   }
 }
 layer {
@@ -161,15 +161,5 @@ layer {
   top: "bbox_pred"
   inner_product_param {
     num_output: 4
-  }
-}
-# landmark
-layer {
-  name: "landmark_pred"
-  type: "InnerProduct"
-  bottom: "fc"
-  top: "landmark_pred"
-  inner_product_param {
-    num_output: 10
   }
 }

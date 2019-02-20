@@ -47,15 +47,15 @@ class JfdaDetector:
       base *= factor
       l *= factor
     if not self.pnet_single_forward or len(scales) <= 1:
-      bboxes = np.zeros((0, 4 + 1 + 4 + 10), dtype=np.float32)
+      bboxes = np.zeros((0, 4 + 1 + 4), dtype=np.float32)
       for scale in scales:
         w, h = int(math.ceil(scale * width)), int(math.ceil(scale * height))
         data = cv2.resize(img, (w, h))
         data = data.transpose((2, 0, 1)).astype(np.float32)
         data = (data - 128) / 128
         data = data.reshape((1, 3, h, w))
-        prob, bbox_pred, landmark_pred = self._forward(self.pnet, data, ['prob', 'bbox_pred', 'landmark_pred'])
-        _bboxes = self._gen_bbox(prob[0][1], bbox_pred[0], landmark_pred[0], scale, ths[0])
+        prob, bbox_pred = self._forward(self.pnet, data, ['prob', 'bbox_pred'])
+        _bboxes = self._gen_bbox(prob[0][1], bbox_pred[0], scale, ths[0])
         keep = nms(_bboxes, 0.5)
         _bboxes = _bboxes[keep]
         bboxes = np.vstack([bboxes, _bboxes])
@@ -66,8 +66,8 @@ class JfdaDetector:
       data = data.astype(np.float32)
       data = (data.transpose((2, 0, 1)) - 128) / 128
       data = data[np.newaxis, :, :, :]
-      prob, bbox_pred, landmark_pred = self._forward(self.pnet, data, ['prob', 'bbox_pred', 'landmark_pred'])
-      bboxes = self._gen_bbox(prob[0][1], bbox_pred[0], landmark_pred[0], 1, ths[0])
+      prob, bbox_pred = self._forward(self.pnet, data, ['prob', 'bbox_pred'])
+      bboxes = self._gen_bbox(prob[0][1], bbox_pred[0], 1, ths[0])
       # nms over every pyramid
       keep = nms(bboxes, 0.5)
       bboxes = bboxes[keep]
@@ -94,15 +94,13 @@ class JfdaDetector:
       face = crop_face(img, bbox[:4])
       data[i] = cv2.resize(face, (24, 24)).transpose((2, 0, 1))
     data = (data - 128) / 128
-    prob, bbox_pred, landmark_pred = self._forward(self.rnet, data, ['prob', 'bbox_pred', 'landmark_pred'])
+    prob, bbox_pred = self._forward(self.rnet, data, ['prob', 'bbox_pred'])
     prob = prob.reshape(n, 2)
     bbox_pred = bbox_pred.reshape(n, 4)
-    landmark_pred = landmark_pred.reshape(n, 10)
     keep = prob[:, 1] > ths[1]
     bboxes = bboxes[keep]
     bboxes[:, 4] = prob[keep, 1]
     bboxes[:, 5:9] = bbox_pred[keep]
-    bboxes[:, 9:] = landmark_pred[keep]
     keep = nms(bboxes, 0.7)
     bboxes = bboxes[keep]
     bboxes = self._bbox_reg(bboxes)
@@ -124,16 +122,13 @@ class JfdaDetector:
       face = crop_face(img, bbox[:4])
       data[i] = cv2.resize(face, (48, 48)).transpose((2, 0, 1))
     data = (data - 128) / 128
-    prob, bbox_pred, landmark_pred = self._forward(self.onet, data, ['prob', 'bbox_pred', 'landmark_pred'])
+    prob, bbox_pred = self._forward(self.onet, data, ['prob', 'bbox_pred'])
     prob = prob.reshape(n, 2)
     bbox_pred = bbox_pred.reshape(n, 4)
-    landmark_pred = landmark_pred.reshape(n, 10)
     keep = prob[:, 1] > ths[2]
     bboxes = bboxes[keep]
     bboxes[:, 4] = prob[keep, 1]
     bboxes[:, 5:9] = bbox_pred[keep]
-    bboxes[:, 9:] = landmark_pred[keep]
-    bboxes = self._locate_landmark(bboxes)
     bboxes = self._bbox_reg(bboxes)
     keep = nms(bboxes, 0.7, 'Min')
     bboxes = bboxes[keep]
@@ -197,7 +192,7 @@ class JfdaDetector:
     net.blobs['data'].data[...] = fake
     net.forward()
 
-  def _gen_bbox(self, hotmap, offset, landmark, scale, th):
+  def _gen_bbox(self, hotmap, offset, scale, th):
     '''[x1, y1, x2, y2, score, offset_x1, offset_y1, offset_x2, offset_y2]
     '''
     h, w = hotmap.shape
@@ -208,7 +203,6 @@ class JfdaDetector:
     pos = np.where(keep)
     score = hotmap[keep]
     offset = offset[:, keep]
-    landmark = landmark[:, keep]
     x, y = pos[1], pos[0]
     x1 = stride * x
     y1 = stride * y
@@ -218,15 +212,8 @@ class JfdaDetector:
     y1 = y1 / scale
     x2 = x2 / scale
     y2 = y2 / scale
-    bbox = np.vstack([x1, y1, x2, y2, score, offset, landmark]).transpose()
+    bbox = np.vstack([x1, y1, x2, y2, score, offset]).transpose()
     return bbox.astype(np.float32)
-
-  def _locate_landmark(self, bboxes):
-    w = bboxes[:, 2] - bboxes[:, 0]
-    h = bboxes[:, 3] - bboxes[:, 1]
-    bboxes[:, 9::2] = bboxes[:, 9::2] * w.reshape((-1, 1)) + bboxes[:, 0].reshape((-1, 1))
-    bboxes[:, 10::2] = bboxes[:, 10::2] * h.reshape((-1, 1)) + bboxes[:, 1].reshape((-1, 1))
-    return bboxes
 
   def _bbox_reg(self, bboxes):
     w = bboxes[:, 2] - bboxes[:, 0]

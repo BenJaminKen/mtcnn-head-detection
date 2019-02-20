@@ -20,12 +20,10 @@ class Solver:
     input_size = cfg.NET_INPUT_SIZE[net_type]
     db_names_train = ['data/%snet_negative_train'%net_type,
                       'data/%snet_positive_train'%net_type,
-                      'data/%snet_part_train'%net_type,
-                      'data/%snet_landmark_train'%net_type]
+                      'data/%snet_part_train'%net_type]
     db_names_test = ['data/%snet_negative_val'%net_type,
                      'data/%snet_positive_val'%net_type,
-                     'data/%snet_part_val'%net_type,
-                     'data/%snet_landmark_val'%net_type]
+                     'data/%snet_part_val'%net_type]
     base_size = args.size
     ns = [r*base_size for r in cfg.DATA_RATIO[net_type]]
     # batcher setup
@@ -47,7 +45,8 @@ class Solver:
     with open(solver_prototxt, 'r') as fin:
       text_format.Merge(fin.read(), solver_param)
     solver_param.max_iter = max_iter  # max training iterations
-    solver_param.snapshot = iter_train  # save after an epoch
+    #solver_param.snapshot = iter_train  # save after an epoch
+    solver_param.snapshot = 1000
     solver_param.test_interval = iter_train
     solver_param.test_iter[0] = iter_test
     solver_param.base_lr = args.lr
@@ -62,8 +61,8 @@ class Solver:
     # data layer setup
     layer_train = self.solver.net.layers[0]
     layer_test = self.solver.test_nets[0].layers[0]
-    layer_train.set_batch_num(ns[0], ns[1], ns[2], ns[3])
-    layer_test.set_batch_num(ns[0], ns[1], ns[2], ns[3])
+    layer_train.set_batch_num(ns[0], ns[1], ns[2])
+    layer_test.set_batch_num(ns[0], ns[1], ns[2])
     layer_train.set_data_queue(queue_train)
     layer_test.set_data_queue(queue_test)
     # copy init weight if any

@@ -53,8 +53,8 @@ cfg.NEG_MIN_SIZE = 12 # minimum random crop patch size for non-face
 # using previous network to generate data
 cfg.PROPOSAL_NETS = {
   'p': None,
-  'r': ['proto/p.prototxt', 'model/p.caffemodel'],
-  'o': ['proto/p.prototxt', 'model/p.caffemodel', 'proto/r.prototxt', 'model/r.caffemodel'],
+  'r': ['proto/p.prototxt', 'tmp/pnet_iter_446000.caffemodel'],
+  'o': ['proto/p.prototxt', 'tmp/pnet_iter_446000.caffemodel', 'proto/r.prototxt', 'tmp/rnet_iter_116000.caffemodel'],
 }
 cfg.DETECT_PARAMS = {
   'min_size': 24,
@@ -64,9 +64,9 @@ cfg.DETECT_PARAMS = {
 
 # training data ratio in a minibatch, [negative, positive, part, landmark]
 cfg.DATA_RATIO = {
-  'p': [3, 1, 1, 2],
-  'r': [3, 1, 1, 2],
-  'o': [3, 2, 1, 2],
+  'p': [3, 1, 1],
+  'r': [3, 1, 1],
+  'o': [3, 2, 1],
 }
 
 # data augment

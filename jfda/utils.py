@@ -5,7 +5,101 @@ import logging
 import cv2
 import numpy as np
 from jfda.config import cfg
+import xml.etree.ElementTree as ET
 
+def load_scutbrainwashcheat():
+
+	train_image_dirs = ['/media/lincolnhard/11e5b063-4031-49ed-bf24-312fc250e90c/lincoln/SCUT_HEAD_Part_B/JPEGImages/', '/media/lincolnhard/11e5b063-4031-49ed-bf24-312fc250e90c/lincoln/SCUT_HEAD_Part_A/JPEGImages/', '/media/lincolnhard/11e5b063-4031-49ed-bf24-312fc250e90c/lincoln/cheat/JPEGImages/', '/media/lincolnhard/11e5b063-4031-49ed-bf24-312fc250e90c/lincoln/brainwash/JPEGImages/']
+	train_data = []
+	for trainimdir in train_image_dirs:
+		print 'parsing ' + trainimdir + ' ...'
+		for name in os.listdir(trainimdir):
+			if name[-4:] == '.jpg':
+				impath = trainimdir + name
+				labelpath = impath.replace('.jpg', '.xml')
+				labelpath = labelpath.replace('JPEGImages', 'Annotations')
+				tree = ET.parse(labelpath)
+				root = tree.getroot()
+				bboxes = []
+				for obj in root.iter('object'):
+					xmlbox = obj.find('bndbox')
+					xmin = int(xmlbox.find('xmin').text)
+					ymin = int(xmlbox.find('ymin').text)
+					xmax = int(xmlbox.find('xmax').text)
+					ymax = int(xmlbox.find('ymax').text)
+					w = xmax - xmin
+					h = ymax - ymin
+					size = min(w, h)
+					# only large enough
+					if size > 12:
+						bbox = [xmin, ymin, xmax, ymax]
+						bboxes.append(bbox)
+				if len(bboxes) > 0:
+					bboxes = np.asarray(bboxes, dtype=np.float32)
+					train_data.append([impath, bboxes])
+	return (train_data, train_data)
+
+def load_cheat():
+
+	train_image_dirs = ['/media/lincolnhard/11e5b063-4031-49ed-bf24-312fc250e90c/lincoln/cheat/JPEGImages/']
+	train_data = []
+	for trainimdir in train_image_dirs:
+		print 'parsing ' + trainimdir + ' ...'
+		for name in os.listdir(trainimdir):
+			if name[-4:] == '.jpg':
+				impath = trainimdir + name
+				labelpath = impath.replace('.jpg', '.xml')
+				labelpath = labelpath.replace('JPEGImages', 'Annotations')
+				tree = ET.parse(labelpath)
+				root = tree.getroot()
+				bboxes = []
+				for obj in root.iter('object'):
+					xmlbox = obj.find('bndbox')
+					xmin = int(xmlbox.find('xmin').text)
+					ymin = int(xmlbox.find('ymin').text)
+					xmax = int(xmlbox.find('xmax').text)
+					ymax = int(xmlbox.find('ymax').text)
+					w = xmax - xmin
+					h = ymax - ymin
+					size = min(w, h)
+					# only large enough
+					if size > 12:
+						bbox = [xmin, ymin, xmax, ymax]
+						bboxes.append(bbox)
+				if len(bboxes) > 0:
+					bboxes = np.asarray(bboxes, dtype=np.float32)
+					train_data.append([impath, bboxes])
+
+	val_image_dirs = ['/media/lincolnhard/11e5b063-4031-49ed-bf24-312fc250e90c/lincoln/cheat/JPEGImages/']
+	val_data = []
+	for valimdir in val_image_dirs:
+		print 'parsing ' + valimdir + ' ...'
+		for name in os.listdir(valimdir):
+			if name[-4:] == '.jpg':
+				impath = valimdir + name
+				labelpath = impath.replace('.jpg', '.xml')
+				labelpath = labelpath.replace('JPEGImages', 'Annotations')
+				tree = ET.parse(labelpath)
+				root = tree.getroot()
+				bboxes = []
+				for obj in root.iter('object'):
+					xmlbox = obj.find('bndbox')
+					xmin = int(xmlbox.find('xmin').text)
+					ymin = int(xmlbox.find('ymin').text)
+					xmax = int(xmlbox.find('xmax').text)
+					ymax = int(xmlbox.find('ymax').text)
+					w = xmax - xmin
+					h = ymax - ymin
+					size = min(w, h)
+					# only large enough
+					if size > 12:
+						bbox = [xmin, ymin, xmax, ymax]
+						bboxes.append(bbox)
+				if len(bboxes) > 0:
+					bboxes = np.asarray(bboxes, dtype=np.float32)
+					val_data.append([impath, bboxes])
+
+	return (train_data, val_data)
 
 def load_wider():
   """load wider face dataset

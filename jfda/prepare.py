@@ -11,7 +11,7 @@ import lmdb
 import caffe
 import numpy as np
 from jfda.config import cfg
-from jfda.utils import load_wider, load_celeba
+from jfda.utils import load_wider, load_celeba, load_scutbrainwashcheat, load_cheat
 from jfda.utils import get_logger, crop_face
 from jfda.detector import JfdaDetector
 
@@ -266,7 +266,9 @@ def proposal(img, gt_bboxes, detector=None):
 
 def gen_wider():
   logger.info('loading WIDER')
-  train_data, val_data = load_wider()
+  #train_data, val_data = load_wider()
+  train_data, val_data = load_scutbrainwashcheat()
+  #train_data, val_data = load_cheat()
   logger.info('total images, train: %d, val: %d', len(train_data), len(val_data))
   train_faces = reduce(lambda acc, x: acc + len(x[1]), train_data, 0)
   val_faces = reduce(lambda acc, x: acc + len(x[1]), val_data, 0)
