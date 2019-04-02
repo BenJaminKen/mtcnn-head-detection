@@ -8,6 +8,8 @@ Set up environment and copy C++ layer code to Caffe's source code tree.
 ```
 $ export PYTHONPATH=/path/to/mtcnn-head-detection:$PYTHONPATH
 $ export CAFFE_HOME=/path/to/caffe
+$ pip install easydict
+$ pip install lmdb
 $ sh layers/copy.sh
 ```
 
